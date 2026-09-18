@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+storm_data/
+data/raw/
+results/
+.env
+.DS_Store
+Thumbs.db
