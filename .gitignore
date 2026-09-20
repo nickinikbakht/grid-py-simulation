@@ -8,3 +8,4 @@ results/
 .env
 .DS_Store
 Thumbs.db
+example_results/
