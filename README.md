@@ -1,101 +1,55 @@
-# Event-Aware Synthetic Energy Data
+# STORM-like Random Energy Simulator (No ML)
 
-This repository documents my step-by-step mini project on electricity-load time series, inspired by research on anomaly detection, change-point detection, and synthetic energy data.
+This mini-project creates a synthetic 15-minute electrical-load dataset with the same core table structure as STORM, but without machine learning.
 
-My long-term research question is:
+It randomly generates homes, commercial buildings, and small industrial consumers; weather and time effects; PV and EV demand; a radial distribution network; measurement anomalies and switching-like events; missing measurements; approximate line loading, losses, and voltage drop; and publication-ready diagrams.
 
-> Can event-aware preprocessing help create more realistic synthetic electricity-load time series while preserving meaningful operational behaviour?
+## Run
 
-I am building this project incrementally. I only describe completed work as completed; planned stages are clearly marked as future work.
+```bash
+python -m pip install -r requirements.txt
+python energy_simulator.py
+```
 
-## Current status
+Optional arguments:
 
-| Step   | Topic                                        | Status    |
-| ------ | -------------------------------------------- | --------- |
-| Step 1 | STORM data understanding and audit           | Completed |
-| Step 2 | Preprocessing and residual construction      | Planned   |
-| Step 3 | Event and change-point analysis              | Planned   |
-| Step 4 | Event-aware synthetic time-series baseline   | Planned   |
-| Step 5 | Physics-based validation on a public network | Planned   |
+```bash
+python energy_simulator.py --days 30 --consumers 30 --seed 42 --output results
+```
 
-## Step 1 — Data understanding and audit
-
-In Step 1, I work with the STORM training dataset to understand its structure before designing any model.
-
-The notebook:
-
-* downloads the official training data;
-* checks the correspondence between feature files and label files;
-* loads one anonymised station safely;
-* audits timestamps, sampling intervals, missing values, and labels;
-* visualises measured load, bottom-up load estimates, and labelled events interactively with Plotly.
-
-The main variables are:
-
-* `S_original`: published load measurement at a primary substation;
-* `BU_original`: bottom-up estimate of the same aggregate load;
-* `missing`: data-quality flag when available;
-* `label = 0`: normal operation;
-* `label = 1`: anomalous interval or operational switching event;
-* `label = 5`: uncertain label.
-
-A key observation is that `S_original` and `BU_original` can differ in scale and offset. Therefore, directly using `S_original - BU_original` would be misleading before preprocessing.
-
-See:
+## Important outputs
 
 ```text
-steps/
-└── step_01_data_understanding/
-    ├── README.md
-    └── STORM_Paper_Reproduction_Step01_Data_English.ipynb
+results/
+  Train/X/1.csv                 STORM-style features
+  Train/y/1.csv                 STORM-style labels
+  consumer_metadata.csv         private consumer characteristics
+  consumer_timeseries.csv       demand/PV/net-load data
+  network_nodes.csv             substation and consumer nodes
+  network_edges.csv             line parameters
+  line_timeseries.csv           loading, loss and voltage results
+  simulation_config.json        all simulation parameters
+  summary.json                  dataset and physical summary
+  plots/network.png
+  plots/storm_timeseries.png
+  plots/residual_and_events.png
+  plots/daily_profile.png
+  plots/physical_diagnostics.png
 ```
 
-## How to run Step 1
+## STORM-compatible columns
 
-Create and activate a Python environment:
+- `M_TIMESTAMP`: UTC timestamp at 15-minute resolution.
+- `S_original`: simulated measured apparent power at the substation.
+- `BU_original`: noisy bottom-up estimate from consumer meters.
+- `missing`: 1 for a deliberately missing/invalid measurement.
+- `label`: 0 normal, 1 anomaly/switching event, 5 uncertain boundary.
 
-```bash
-python -m venv .venv
-source .venv/Scripts/activate
-```
+## Physics scope
 
-Install the required packages:
+This is a transparent educational approximation, not an AC power-flow solver. The radial network uses downstream active power, an assumed power factor, three-phase current, resistive line loss, and approximate voltage drop. A later version can replace `RadialGrid.evaluate()` with pandapower while retaining the generated consumers and time series.
 
-```bash
-pip install pandas plotly jupyter
-```
+## Later ML stage
 
-Start Jupyter:
+The generated 96-point daily profiles can later train a conditional VAE. Physics losses can penalize negative demand, PV at night, voltage violations, and line overloads. Keep `consumer_metadata.csv` private; release only suitable aggregated or synthetic outputs.
 
-```bash
-jupyter notebook
-```
-
-Then open and run:
-
-```text
-steps/step_01_data_understanding/STORM_Paper_Reproduction_Step01_Data_English.ipynb
-```
-
-On the first run, the notebook downloads the STORM training data into `storm_data/`. This downloaded directory is excluded from Git.
-
-## Next step
-
-In Step 2, I will reproduce the preprocessing procedure used in the reference work:
-
-1. identify invalid observations;
-2. align the bottom-up estimate with the measured load using robust fitting;
-3. construct the residual vector \(\delta\);
-4. inspect how events and switching intervals appear in this residual.
-
-This will create a sound basis for later event-aware synthetic time-series modelling.
-
-## Current limitations
-
-This repository does not yet contain a generative model or a physics-informed loss.
-
-The current data provide load measurements and labels, but not full network topology, line parameters, voltage data, or power-flow information. For this reason, Step 1 is a data-understanding and reproducibility exercise, not yet a physics-informed energy-data experiment.
-
-## Why this project matters to me
-
-My previous work on electrical-motor stress monitoring made me interested in the difference between normal transient behaviour, true operational changes, and anomalous signals. This project lets me explore the same general problem in electricity-grid time series, while learning the domain carefully and building a reproducible research workflow.

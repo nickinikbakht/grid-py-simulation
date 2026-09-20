@@ -1,0 +1,20 @@
+{
+  "seed": 42,
+  "days": 7,
+  "interval_minutes": 15,
+  "n_consumers": 12,
+  "start": "2026-01-01 00:00:00+00:00",
+  "nominal_voltage_v": 11000.0,
+  "power_factor": 0.95,
+  "line_resistance_ohm_per_km": 0.12,
+  "min_line_capacity_kw": 80.0,
+  "max_line_capacity_kw": 500.0,
+  "minimum_allowed_voltage_pu": 0.9,
+  "maximum_allowed_voltage_pu": 1.1,
+  "measurement_noise_std_fraction": 0.012,
+  "bottom_up_noise_std_fraction": 0.035,
+  "anomaly_probability": 0.003,
+  "switch_event_probability_per_day": 0.05,
+  "missing_probability": 0.003,
+  "uncertain_boundary_steps": 2
+}

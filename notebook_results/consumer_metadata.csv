@@ -1,0 +1,13 @@
+consumer_id,consumer_type,household_size,floor_area_m2,employee_count,installed_capacity_kw,has_ev,ev_charger_kw,has_pv,pv_capacity_kw,heating_type,insulation_factor,opening_hour,closing_hour,phase
+C001,home,4,60.87,0,13.3,False,0.0,False,0.0,heat_pump,0.892,0,24,C
+C002,commercial,0,783.41,46,42.36,False,0.0,False,0.0,electric,0.853,8,21,C
+C003,home,3,50.44,0,6.0,False,0.0,True,12.8,heat_pump,0.895,0,24,B
+C004,home,3,170.43,0,8.67,False,0.0,False,0.0,gas,0.868,0,24,B
+C005,commercial,0,627.12,67,59.57,False,0.0,False,0.0,gas,0.822,7,19,A
+C006,industrial,0,2583.52,147,194.97,False,0.0,False,0.0,heat_pump,1.036,6,22,A
+C007,home,3,76.13,0,4.14,False,0.0,True,2.63,heat_pump,0.81,0,24,C
+C008,home,2,50.74,0,6.79,True,7.4,True,7.42,heat_pump,0.93,0,24,A
+C009,home,1,80.37,0,11.57,False,0.0,False,0.0,gas,1.043,0,24,B
+C010,home,1,180.44,0,12.44,False,0.0,True,14.27,electric,1.194,0,24,C
+C011,industrial,0,739.63,62,248.91,True,3.7,False,0.0,gas,1.174,6,22,C
+C012,home,5,194.95,0,4.98,True,11.0,True,9.17,gas,0.896,0,24,C

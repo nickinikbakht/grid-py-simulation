@@ -1,0 +1,13 @@
+{
+  "timestamps": 672,
+  "consumers": 12,
+  "normal_rows": 603,
+  "event_rows": 65,
+  "uncertain_rows": 4,
+  "missing_rows": 0,
+  "maximum_line_loading_percent": 73.58583150254927,
+  "minimum_voltage_pu": 0.9996225317130559,
+  "overloaded_line_rows": 0.0,
+  "voltage_violation_rows": 0.0,
+  "total_energy_loss_kwh": 6.545141840295064
+}
