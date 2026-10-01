@@ -1,11 +1,22 @@
 .venv/
 __pycache__/
+*.py[cod]
 .pytest_cache/
 .ipynb_checkpoints/
-storm_data/
-data/raw/
-results/
 .env
 .DS_Store
 Thumbs.db
+
+# Data and generated artifacts
+storm_data/
+data/raw/
+results/
+stage1_results/
+stage2_data/
+stage2_cvae_results/
+storm_real_cvae_results/
+*.pt
+*.pth
+
+# Keep lightweight documented examples only if intentionally committed
 example_results/
