@@ -297,11 +297,29 @@ def train_model(model: ConditionalVAE, data: PreparedData, cfg: CVAEConfig, phys
 
 
 @torch.no_grad()
-def generate(model: ConditionalVAE, conditions: torch.Tensor, data: PreparedData, seed: int) -> torch.Tensor:
+def generate(
+    model: ConditionalVAE,
+    conditions: torch.Tensor,
+    data: PreparedData,
+    seed: int,
+    enforce_hard_physics: bool = False,
+) -> torch.Tensor:
+    """Generate samples and optionally enforce exact physical output constraints.
+
+    Soft Physics-CVAE samples are returned directly from the decoder after
+    de-standardization.  With ``enforce_hard_physics=True``, consumption and
+    PV generation are clipped to non-negative values and net load is
+    recomputed exactly as consumption - PV generation.
+    """
     torch.manual_seed(seed)
     model.eval()
     z = torch.randn(conditions.shape[0], model.latent_dim, device=conditions.device)
-    return destandardize(model.decode(z, conditions), data)
+    generated = destandardize(model.decode(z, conditions), data)
+
+    if enforce_hard_physics:
+        generated = hard_physics_projection(generated)
+
+    return generated
 
 
 def lag1_autocorrelation(net_load: torch.Tensor) -> float:
@@ -355,9 +373,27 @@ def fidelity_metrics(real: torch.Tensor, synthetic: torch.Tensor) -> dict[str, f
 
 def evaluate_and_save(output: Path, data: PreparedData, baseline: ConditionalVAE, physics_model: ConditionalVAE, baseline_history: pd.DataFrame, physics_history: pd.DataFrame, seed: int) -> pd.DataFrame:
     output.mkdir(parents=True, exist_ok=True)
-    baseline_sample = generate(baseline, data.c_test, data, seed)
-    physics_sample = generate(physics_model, data.c_test, data, seed)
-    hard_sample = hard_physics_projection(physics_sample)
+    baseline_sample = generate(
+        baseline,
+        data.c_test,
+        data,
+        seed,
+        enforce_hard_physics=False,
+    )
+    physics_sample = generate(
+        physics_model,
+        data.c_test,
+        data,
+        seed,
+        enforce_hard_physics=False,
+    )
+    hard_sample = generate(
+        physics_model,
+        data.c_test,
+        data,
+        seed,
+        enforce_hard_physics=True,
+    )
     rows = []
     for name, sample in [("real", data.real_test), ("cvae", baseline_sample), ("physics_cvae", physics_sample), ("physics_cvae_hard", hard_sample)]:
         row = {"model": name, **physical_metrics(sample, data)}
