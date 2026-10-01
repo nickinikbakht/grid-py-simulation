@@ -1,55 +1,122 @@
-# STORM-like Random Energy Simulator (No ML)
+# Physics-Informed Generative Modeling for Synthetic Energy Data
 
-This mini-project creates a synthetic 15-minute electrical-load dataset with the same core table structure as STORM, but without machine learning.
+A research mini-project exploring how **physical and domain constraints can be
+combined with conditional generative models for electrical energy time series**.
 
-It randomly generates homes, commercial buildings, and small industrial consumers; weather and time effects; PV and EV demand; a radial distribution network; measurement anomalies and switching-like events; missing measurements; approximate line loading, losses, and voltage drop; and publication-ready diagrams.
+The project progresses from a transparent simulator to physics-aware generation
+and finally to domain-informed modeling of real STORM data.
 
-## Run
+## Research question
 
-```bash
-python -m pip install -r requirements.txt
-python energy_simulator.py
-```
+> How much physical consistency can be introduced into synthetic energy-data
+> generation without unnecessarily sacrificing statistical and temporal fidelity?
 
-Optional arguments:
-
-```bash
-python energy_simulator.py --days 30 --consumers 30 --seed 42 --output results
-```
-
-## Important outputs
+## Pipeline
 
 ```text
-results/
-  Train/X/1.csv                 STORM-style features
-  Train/y/1.csv                 STORM-style labels
-  consumer_metadata.csv         private consumer characteristics
-  consumer_timeseries.csv       demand/PV/net-load data
-  network_nodes.csv             substation and consumer nodes
-  network_edges.csv             line parameters
-  line_timeseries.csv           loading, loss and voltage results
-  simulation_config.json        all simulation parameters
-  summary.json                  dataset and physical summary
-  plots/network.png
-  plots/storm_timeseries.png
-  plots/residual_and_events.png
-  plots/daily_profile.png
-  plots/physical_diagnostics.png
+Stage 1                         Stage 2                         Stage 3
+Physics simulator  ───────▶    CVAE baseline                  Real STORM data
+                               │                              │
+                               ├─ Physics-aware CVAE          ├─ CVAE baseline
+                               └─ Hard projection             └─ Domain-informed CVAE
 ```
 
-## STORM-compatible columns
+## Repository structure
 
-- `M_TIMESTAMP`: UTC timestamp at 15-minute resolution.
-- `S_original`: simulated measured apparent power at the substation.
-- `BU_original`: noisy bottom-up estimate from consumer meters.
-- `missing`: 1 for a deliberately missing/invalid measurement.
-- `label`: 0 normal, 1 anomaly/switching event, 5 uncertain boundary.
+```text
+storm_physics_genai/
+├── README.md
+├── requirements.txt
+├── stage1_simulator/
+│   ├── energy_simulator.py
+│   └── README.md
+├── stage2_physics_cvae/
+│   ├── physics_cvae.py
+│   └── README.md
+├── stage3_real_storm/
+│   ├── physics_cvae_storm.py
+│   └── README.md
+├── notebooks/
+│   ├── stage1_simulator_demo.ipynb
+│   └── stage2_physics_cvae_demo.ipynb
+├── docs/
+└── tests/
+```
 
-## Physics scope
+## Stage 1 — Controlled physics-based simulator
 
-This is a transparent educational approximation, not an AC power-flow solver. The radial network uses downstream active power, an assumed power factor, three-phase current, resistive line loss, and approximate voltage drop. A later version can replace `RadialGrid.evaluate()` with pandapower while retaining the generated consumers and time series.
+Generates synthetic 15-minute profiles for residential, commercial, and
+industrial consumers with weather/calendar effects, PV, EV charging, a radial
+network, measurement noise, events, line loading, losses, and approximate
+voltage behavior.
 
-## Later ML stage
+The network equations are intentionally simplified and are **not presented as
+a full AC power-flow solver**.
 
-The generated 96-point daily profiles can later train a conditional VAE. Physics losses can penalize negative demand, PV at night, voltage violations, and line overloads. Keep `consumer_metadata.csv` private; release only suitable aggregated or synthetic outputs.
+## Stage 2 — Physics-aware synthetic-data generation
 
+A conditional VAE jointly generates consumption, PV generation, and net load.
+A second model adds differentiable penalties for:
+
+- energy-balance consistency;
+- non-negative consumption/PV;
+- line-capacity violations;
+- lower and upper voltage-limit violations.
+
+A hard-projection baseline provides a comparison between exact constraint
+satisfaction and learned soft constraints.
+
+## Stage 3 — Real STORM data
+
+A separate CVAE is trained on real STORM daily time-series windows. Because the
+available STORM files do not contain the complete topology and line parameters
+needed for power-flow constraints, this stage uses **domain-informed penalties**
+rather than claiming full physics-informed learning.
+
+## Installation
+
+```bash
+python -m venv .venv
+```
+
+Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+macOS/Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+Then:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+## Reproducibility
+
+All main scripts expose random seeds and write generated outputs to dedicated
+result directories. Large datasets, checkpoints, and generated results are
+excluded from version control.
+
+## Current research limitations
+
+- The Stage 1/2 radial-grid model is an interpretable approximation, not a
+  validated AC power-flow solver.
+- Stage 2 uses a dense CVAE rather than an explicitly graph-structured
+  generative architecture.
+- Stage 3 cannot enforce network power-flow equations without additional
+  topology and electrical-parameter data.
+- A stronger research extension would compare the CVAE with diffusion/flow
+  models and use a validated power-flow layer or graph-based constraint model.
+
+## Project goal
+
+This repository is intended as a compact research prototype for studying
+physics-aware synthetic energy data, reproducible model comparison, and future
+extensions toward graph-based and privacy-preserving generative modeling.

@@ -240,12 +240,13 @@ class RadialGrid:
                 downstream = [node for node in self.descendants(line.child) if node in pivot.columns]
                 active_kw = pivot[downstream].sum(axis=1).to_numpy()
                 apparent_kva = np.abs(active_kw) / self.config.power_factor
-                current_a = apparent_kva * 1000 / (np.sqrt(3) * self.config.nominal_voltage_v)
+                current_signed_a = active_kw * 1000 / (np.sqrt(3) * self.config.nominal_voltage_v * self.config.power_factor)
+                current_a = np.abs(current_signed_a)
                 loss_kw = 3 * current_a**2 * line.resistance_ohm / 1000
-                voltage_drop_v = np.sqrt(3) * current_a * line.resistance_ohm * self.config.power_factor
+                voltage_drop_v = np.sqrt(3) * current_signed_a * line.resistance_ohm * self.config.power_factor
                 child_voltage = np.clip(voltage_by_node[line.parent] - voltage_drop_v, 0, None)
                 voltage_by_node[line.child] = child_voltage
-                loading_percent = apparent_kva / line.capacity_kw * 100
+                loading_percent = np.abs(active_kw) / line.capacity_kw * 100
                 records.append(pd.DataFrame({
                     "M_TIMESTAMP": pivot.index,
                     "parent": line.parent,
@@ -258,7 +259,7 @@ class RadialGrid:
                     "voltage_pu": child_voltage / self.config.nominal_voltage_v,
                     "loading_percent": loading_percent,
                     "overloaded": loading_percent > 100,
-                    "voltage_violation": child_voltage / self.config.nominal_voltage_v < self.config.minimum_allowed_voltage_pu,
+                    "voltage_violation": (child_voltage / self.config.nominal_voltage_v < self.config.minimum_allowed_voltage_pu) | (child_voltage / self.config.nominal_voltage_v > self.config.maximum_allowed_voltage_pu),
                 }))
                 remaining.remove(line)
                 progress = True
